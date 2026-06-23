@@ -1,0 +1,196 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum DocumentType {
+  tech_design_doc
+  product_spec
+  security_review
+  plan
+  custom
+}
+
+enum DocumentState {
+  SETUP
+  GENERATING
+  IN_REVIEW
+  APPROVED
+  INTERRUPTED
+}
+
+enum SectionState {
+  NOT_STARTED
+  DRAFT
+  OPEN
+  QUEUED_FOR_REVISION
+  REVISING
+  APPROVED
+  DRAFT_ERROR
+}
+
+enum AuthorType {
+  human
+  ai_critic
+}
+
+enum ResourceType {
+  file
+  url
+  jira
+  confluence
+}
+
+enum ResourceStatus {
+  pending
+  fetched
+  failed
+  skipped
+}
+
+model Document {
+  id         String        @id @default(uuid())
+  type       DocumentType
+  title      String
+  brief      String        @db.Text
+  state      DocumentState @default(SETUP)
+  shareToken String        @unique @map("share_token")
+  createdAt  DateTime      @default(now()) @map("created_at")
+  updatedAt  DateTime      @updatedAt @map("updated_at")
+
+  sections   Section[]
+  resources  Resource[]
+  chats      DocumentChat[]
+  activities DocumentActivity[]
+  snapshots  DocumentSnapshot[]
+
+  @@map("documents")
+}
+
+model DocumentActivity {
+  id         String   @id @default(uuid())
+  documentId String   @map("document_id")
+  role       String   // 'human' | 'ai'
+  actorLabel String   @map("actor_label")
+  type       String   // 'section_drafted' | 'section_revised' | 'section_edited' | 'comment_added' | 'section_restored'
+  body       String   @db.Text
+  sectionId  String?  @map("section_id")
+  snapshotId String?  @map("snapshot_id") // links to SectionSnapshot (legacy per-section restore)
+  documentSnapshotId String? @map("document_snapshot_id") // links to DocumentSnapshot (whole-doc restore)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId, createdAt])
+  @@map("document_activities")
+}
+
+model DocumentChat {
+  id         String   @id @default(uuid())
+  documentId String   @map("document_id")
+  role       String   // 'human' | 'ai'
+  body       String   @db.Text
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId, createdAt])
+  @@map("document_chats")
+}
+
+model Section {
+  id         String       @id @default(uuid())
+  documentId String       @map("document_id")
+  title      String
+  content    String?      @db.Text
+  state      SectionState @default(NOT_STARTED)
+  version    Int          @default(0)
+  orderIndex Int          @map("order_index")
+  approvedBy String?      @map("approved_by")
+  approvedAt DateTime?    @map("approved_at")
+  createdAt  DateTime     @default(now()) @map("created_at")
+  updatedAt  DateTime     @updatedAt @map("updated_at")
+
+  document  Document          @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  comments  Comment[]
+  snapshots SectionSnapshot[]
+
+  @@index([documentId, orderIndex])
+  @@map("sections")
+}
+
+model Comment {
+  id           String     @id @default(uuid())
+  sectionId    String     @map("section_id")
+  parentId     String?    @map("parent_id")
+  authorType   AuthorType @map("author_type")
+  authorLabel  String     @map("author_label")
+  body         String     @db.Text
+  rangeStart   Int?       @map("range_start")
+  rangeEnd     Int?       @map("range_end")
+  anchoredText    String?  @db.Text @map("anchored_text")
+  replacementText String?  @db.Text @map("replacement_text")
+  outdated        Boolean  @default(false)
+  resolved     Boolean    @default(false)
+  resolvedBy   String?    @map("resolved_by")
+  resolvedAt   DateTime?  @map("resolved_at")
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  section Section   @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  parent  Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies Comment[] @relation("CommentReplies")
+
+  @@index([sectionId, createdAt])
+  @@index([parentId])
+  @@map("comments")
+}
+
+model SectionSnapshot {
+  id        String   @id @default(uuid())
+  sectionId String   @map("section_id")
+  content   String   @db.Text
+  version   Int
+  label     String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  section Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@index([sectionId, version])
+  @@map("section_snapshots")
+}
+
+// Whole-document point-in-time snapshot. `sections` is a JSON array of
+// { sectionId, title, content, orderIndex, state } captured at the moment of a
+// meaningful change, so the entire document can be previewed/restored as it was.
+model DocumentSnapshot {
+  id         String   @id @default(uuid())
+  documentId String   @map("document_id")
+  title      String
+  sections   Json
+  label      String
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId, createdAt])
+  @@map("document_snapshots")
+}
+
+model Resource {
+  id         String         @id @default(uuid())
+  documentId String         @map("document_id")
+  type       ResourceType
+  source     String
+  content    String?        @db.Text
+  status     ResourceStatus @default(pending)
+  error      String?
+  createdAt  DateTime       @default(now()) @map("created_at")
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@map("resources")
+}

@@ -1,5 +1,14 @@
 .env
 .take-home-token
+
+# Markdown — ignore all except APPROACH.md and video.md
+*.md
+!APPROACH.md
+!video.md
+
+# Build output
+dist/
+
 node_modules/
 __pycache__/
 .venv/
@@ -9,3 +18,9 @@ __pycache__/
 .gcloud/
 google-cloud-sdk/
 google-cloud-cli-*.tar.gz
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

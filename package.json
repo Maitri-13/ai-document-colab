@@ -1,0 +1,19 @@
+{
+  "name": "collab-docs",
+  "private": true,
+  "scripts": {
+    "dev:backend": "cd apps/backend && npm run dev",
+    "dev:frontend": "cd apps/frontend && npm run dev",
+    "db:migrate": "cd apps/backend && npx prisma migrate deploy",
+    "db:push": "cd apps/backend && npx prisma db push",
+    "build:backend": "cd apps/backend && npm run build",
+    "build:frontend": "cd apps/frontend && npm run build",
+    "test:e2e": "npx playwright test",
+    "test:e2e:ui": "npx playwright test --ui",
+    "test:e2e:headed": "npx playwright test --headed",
+    "test:e2e:debug": "npx playwright test --debug"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.0"
+  }
+}

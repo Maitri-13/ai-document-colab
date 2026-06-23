@@ -1,0 +1,15 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[build.args]
+NEXT_PUBLIC_API_URL = "${{NEXT_PUBLIC_API_URL}}"
+
+[deploy]
+# Bind to 3000 explicitly: Railway injects PORT=8080 at runtime, but the public
+# domain routes to 3000 (matching Dockerfile EXPOSE 3000). The inline PORT=3000
+# overrides the injected value; sh -c is required because Railway does not run
+# the startCommand through a shell on its own.
+startCommand = "sh -c 'PORT=3000 node server.js'"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
