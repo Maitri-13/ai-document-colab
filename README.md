@@ -2,8 +2,6 @@
 
 A collaborative document editor where AI is a first-class author — writing, critiquing, and refining documents alongside you. You give a brief, the AI drafts a structured starter document section by section, and from there you edit by hand, talk to the AI by voice or text, request on-demand inline reviews, leave comments, and roll back to any past version.
 
-**Live demo:** https://frontend-production-4fa6.up.railway.app
-
 > Design rationale, tradeoffs, and what I'd build next live in [APPROACH.md](APPROACH.md).
 
 ---
