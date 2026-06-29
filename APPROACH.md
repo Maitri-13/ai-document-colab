@@ -1,9 +1,5 @@
 # CollabDocs — Approach
 
-**Live URL:** [https://frontend-production-4fa6.up.railway.app](https://frontend-production-4fa6.up.railway.app)
-
----
-
 ## What I Built
 
 CollabDocs — a document editor where AI is integrated into every aspect of document building: writing, critiquing, refining, and reiterating. The product prioritizes human-AI interaction and provides value through AI context hygiene. Voice interactions make the experience smooth.
